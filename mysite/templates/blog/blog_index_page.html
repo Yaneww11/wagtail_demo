@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags %}
+
+{% block body_class %}template-blogindexpage{% endblock %}
+
+{% block content %}
+    <h1>{{ page.title }}</h1>
+    <div class="intro">{{ page.intro|richtext }}</div>
+
+    <h2>Posts:</h2>
+    {% for post in page.get_children %}
+        <h3><a href="{% pageurl post %}">{{ post.title }}</a></h3>
+        {{ post.specific.intro }}
+        {{ post.specific.body|richtext }}
+        {% if not  forloop.last %}
+            <hr>
+        {% endif %}
+    {% endfor %}
+
+    <h2>Events:</h2>
+    {% for b in events %}
+        <div>{{ b }}</div>
+    {% endfor %}
+
+    <h2>Closest anchestor:</h2>
+    <div>{{ closest_ancestor }}</div>
+
+{% endblock %}
