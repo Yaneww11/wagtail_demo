@@ -11,7 +11,7 @@ build/
 *.egg
 
 # Virtual environments
-venv/
+.venv/
 
 # PyCharm
 .idea/

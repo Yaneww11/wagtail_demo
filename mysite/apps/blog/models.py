@@ -1,9 +1,12 @@
 from datetime import date
 
 from django.db import models
+from django.http.response import Http404
+from django.shortcuts import render
 from wagtail.fields import RichTextField
 from wagtail.models import Page
 from wagtail.search import index
+from wagtail.url_routing import RouteResult
 
 
 class BlogIndexPage(Page):
@@ -31,7 +34,6 @@ class BlogIndexPage(Page):
         # Find the closest ancestor which is an event index
         return self.get_ancestors().type(BlogIndexPage).last()
 
-
 class BlogPage(Page):
     date = models.DateField("Post date")
     intro = models.CharField(max_length=250)
@@ -43,4 +45,29 @@ class BlogPage(Page):
     ]
 
     content_panels = Page.content_panels + ["date", "intro", "body"]
+
+class Echoer(Page):
+    template = "blog/echoer.html"  # Explicitly set the template
+
+    def route(self, request, path_components):
+        if path_components:
+            # tell Wagtail to call self.serve() with an additional 'path_components' kwarg
+            data_value = request.GET
+            return RouteResult(self, kwargs={
+                'path_components': path_components,
+                'get_params': data_value
+            })
+        else:
+            if self.live:
+                # tell Wagtail to call self.serve() with no further args
+                return RouteResult(self)
+            else:
+                raise Http404
+
+    def serve(self, request, path_components=[], get_params=None):
+        return render(request, self.template, {
+            'page': self,
+            'echo': ' '.join(path_components),
+            'get_params': get_params,
+        })
 
