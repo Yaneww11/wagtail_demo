@@ -4,7 +4,9 @@ from django import forms
 from django.db import models
 from django.http.response import Http404
 from django.shortcuts import render
+from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
+from taggit.models import TaggedItemBase
 from wagtail.admin.panels import MultiFieldPanel, FieldPanel
 from wagtail.fields import RichTextField
 from wagtail.models import Page, Orderable
@@ -34,11 +36,29 @@ class BlogIndexPage(Page):
         # Find the closest ancestor which is an event index
         return self.get_ancestors().type(Page).last()
 
+class BlogTagIndexPage(Page):
+
+    def get_context(self, request, **kwargs):
+        tag = request.GET.get('tag')
+        blogpages = BlogPage.objects.filter(tags__name=tag)
+
+        context = super().get_context(request)
+        context['blogpages'] = blogpages
+        return context
+
+class BlogPageTag(TaggedItemBase):
+    content_object = ParentalKey(
+        'BlogPage',
+        related_name='tagged_items',
+        on_delete=models.CASCADE
+    )
+
 class BlogPage(Page):
     date = models.DateField("Post date")
     intro = models.CharField(max_length=250)
     body = RichTextField(blank=True)
     authors = ParentalManyToManyField('snippets.Author', blank=True)
+    tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
 
     def main_image(self):
         gallery_item = self.gallery_images.first()
@@ -56,9 +76,12 @@ class BlogPage(Page):
         MultiFieldPanel([
             "date",
             FieldPanel("authors", widget=forms.CheckboxSelectMultiple),
+
+            # Add this:
+            "tags",
         ], heading="Blog information"),
-        "intro", "body", "gallery_images"
-    ]
+            "intro", "body", "gallery_images"
+        ]
 
 class BlogPageGalleryImage(Orderable):
     page = ParentalKey(

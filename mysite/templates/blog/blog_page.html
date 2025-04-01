@@ -48,5 +48,20 @@
 
     <p><a href="{{ page.get_parent.url }}">Return to blog</a></p>
 
+    <div>
+    {% with tags=page.tags.all %}
+        {% if tags %}
+            <div class="tags" style="margin-top: 80px;">
+                <h3>Tags</h3>
+                {% for tag in tags %}
+                    <a href="{% slugurl 'tags' %}?tag={{ tag }}">
+                        <button type="button">{{ tag }}</button>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    </div>
+
 {% endblock %}
 
